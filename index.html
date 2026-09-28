@@ -1543,22 +1543,14 @@ body.Dip-con-modal{overflow: hidden;}
 /* ── Fin Leaflet ──────────────────────────────────────────── */
 
 /* ---------- Mapa seccional de Jalisco (Dip-mapa) ---------- */
-/* Sangrado total: rompe el max-width de .Dip-contenedor y llega al borde de la
-   ventana. El ancho de la barra de desplazamiento se mide en JS y se publica en
-   --Dip-scroll, porque 100vw la incluye y sin descontarla reaparece el
-   desbordamiento lateral que este proyecto ya tuvo una vez. */
-#Dip-app .Dip-sangria-total{width: calc(100vw - var(--Dip-scroll, 0px));
-  margin-left: calc(50% - (100vw - var(--Dip-scroll, 0px)) / 2);
-  margin-right: calc(50% - (100vw - var(--Dip-scroll, 0px)) / 2);
-  border-radius: 0;
-  border-left: 0;
-  border-right: 0;}
+/* El panel vive dentro de .Dip-contenedor y hereda su ancho: queda alineado
+   con el resto de los paneles del tablero, sin sangrado. */
 #Dip-app .Dip-mapa-cabeza{display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
   flex-wrap: wrap;
-  padding: 18px 24px 14px;
+  padding: 18px 20px 14px;
   border-bottom: 1px solid var(--Dip-linea-suave);}
 #Dip-app .Dip-mapa-sello{display: inline-flex;
   align-items: center;
@@ -1574,12 +1566,32 @@ body.Dip-con-modal{overflow: hidden;}
   white-space: nowrap;}
 #Dip-app .Dip-mapa-controles{display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 18px;
   flex-wrap: wrap;
-  padding: 12px 24px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--Dip-linea-suave);
   background: rgba(22, 34, 58, 0.34);}
 #Dip-app .Dip-mapa-grupo{display: flex; align-items: center; gap: 9px;}
+/* Conmutador de capa base: segmentado, del mismo lenguaje que .Dip-filtro */
+#Dip-app .Dip-mapa-conmutador{display: inline-flex;
+  border: 1px solid var(--Dip-linea);
+  border-radius: var(--Dip-radio-chico);
+  overflow: hidden;}
+#Dip-app .Dip-mapa-opcion{background: var(--Dip-pizarra-alta);
+  color: var(--Dip-texto-medio);
+  border: 0;
+  border-right: 1px solid var(--Dip-linea);
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;}
+#Dip-app .Dip-mapa-opcion:last-child{border-right: 0;}
+#Dip-app .Dip-mapa-opcion:hover{color: var(--Dip-texto); background: #1a2743;}
+#Dip-app .Dip-mapa-opcion[aria-pressed="true"]{background: var(--Dip-texto);
+  color: var(--Dip-tinta);
+  font-weight: 600;}
+#Dip-app .Dip-mapa-opcion:focus-visible{outline: 2px solid var(--Dip-cian); outline-offset: -2px;}
 #Dip-app .Dip-mapa-et{font-size: 11.5px;
   color: var(--Dip-texto-tenue);
   white-space: nowrap;}
@@ -1696,9 +1708,11 @@ body.Dip-con-modal{overflow: hidden;}
   gap: 16px;
   flex-wrap: wrap;
   padding: 12px 24px 16px;}
-/* El tema de Dip es oscuro fijo: las teselas de OSM se atenúan para que el
-   semáforo no compita con el mapa base. */
-#Dip-app #Dip-mapa-leaflet .leaflet-tile-pane{filter: saturate(0.45) brightness(0.62) contrast(1.08);}
+/* El tema de Dip es oscuro fijo: el mapa base se atenúa para que el semáforo no
+   compita con él. El satélite necesita menos mano: desaturarlo como a OSM lo
+   volvería una mancha parda e ilegible. */
+#Dip-app #Dip-mapa-leaflet[data-dip-base="osm"] .leaflet-tile-pane{filter: saturate(0.45) brightness(0.62) contrast(1.08);}
+#Dip-app #Dip-mapa-leaflet[data-dip-base="satelite"] .leaflet-tile-pane{filter: saturate(0.82) brightness(0.74) contrast(1.04);}
 /* Leaflet pone .leaflet-container en el PROPIO contenedor, no en un hijo: con
    un descendiente el selector no acierta y el #ddd de la hoja original gana,
    dejando el mapa gris claro cuando las teselas no cargan. */
@@ -1889,7 +1903,7 @@ body.Dip-con-modal{overflow: hidden;}
   </section>
 
   <!-- Mapa seccional de Jalisco: cartografia real del INE coloreada desde el Google Sheet -->
-  <section id="Dip-mapa-seccional" class="Dip-panel Dip-sangria-total Dip-mt-5"
+  <section id="Dip-mapa-seccional" class="Dip-panel Dip-mt-5"
            aria-labelledby="Dip-mapa-titulo">
 
     <div class="Dip-mapa-cabeza">
@@ -1907,6 +1921,18 @@ body.Dip-con-modal{overflow: hidden;}
                min="0" max="100" step="1" value="78"
                aria-label="Opacidad del relleno de las secciones">
         <output class="Dip-mapa-valor" id="Dip-mapa-opacidad-valor" for="Dip-mapa-opacidad">78%</output>
+      </div>
+
+      <div class="Dip-mapa-grupo">
+        <span class="Dip-mapa-et">Capa base</span>
+        <div class="Dip-mapa-conmutador" role="group" aria-label="Capa base del mapa">
+          <button type="button" class="Dip-mapa-opcion" id="Dip-mapa-base-osm"
+                  data-dip-base="osm" aria-pressed="true">Mapa</button>
+          <button type="button" class="Dip-mapa-opcion" id="Dip-mapa-base-sat"
+                  data-dip-base="satelite" aria-pressed="false">Satelite</button>
+          <button type="button" class="Dip-mapa-opcion" id="Dip-mapa-base-nada"
+                  data-dip-base="ninguna" aria-pressed="false">Sin base</button>
+        </div>
       </div>
 
       <div class="Dip-mapa-grupo">
@@ -5579,6 +5605,7 @@ window.Dip_MAPA_CATALOGO = "{\"1\":\"ACATIC\",\"2\":\"ACATLAN DE JUAREZ\",\"3\":
   };
 
   var CLAVE_OPACIDAD = 'Dip-mapa-opacidad';
+  var CLAVE_BASE = 'Dip-mapa-base';
   var COLOR = { ganada: '#3fb984', swing: '#e8973a', riesgo: '#d2455c', sinDato: '#1a2740' };
   var ETIQUETA = { ganada: 'Clave ganada', swing: 'Competida', riesgo: 'En riesgo', 'sin dato': 'Sin dato' };
   /* Columnas que empiezan por VOTOS_ pero NO son un partido: son calculadas. */
@@ -5600,7 +5627,7 @@ window.Dip_MAPA_CATALOGO = "{\"1\":\"ACATIC\",\"2\":\"ACATLAN DE JUAREZ\",\"3\":
   }
 
   var vista = {
-    mapa: null, lienzo: null, capa: null, teselas: null,
+    mapa: null, lienzo: null, capa: null, bases: null, base: 'osm',
     porSeccion: Object.create(null),   /* clave -> capa Leaflet */
     datos: Object.create(null),        /* clave -> fila de la hoja */
     rasgos: [],                        /* GeoJSON de las 4,080 secciones */
@@ -5776,20 +5803,54 @@ window.Dip_MAPA_CATALOGO = "{\"1\":\"ACATIC\",\"2\":\"ACATLAN DE JUAREZ\",\"3\":
     });
     L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(vista.mapa);
 
-    vista.teselas = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, crossOrigin: true,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &middot; cartografia seccional INE'
+    vista.bases = {
+      osm: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, crossOrigin: true,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &middot; cartografia seccional INE'
+      }),
+      /* Esri World Imagery: mosaico satelital de uso libre con atribucion.
+         Llega a z19 en zona urbana; por encima se ve borroso, asi que el mapa
+         no pasa de 18 y no hay salto visible. */
+      satelite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19, crossOrigin: true,
+        attribution: 'Imagenes &copy; Esri, Maxar, Earthstar Geographics &middot; cartografia seccional INE'
+      })
+    };
+
+    var avisado = {};
+    Object.keys(vista.bases).forEach(function (k) {
+      var fallos = 0;
+      vista.bases[k].on('tileerror', function () {
+        fallos++;
+        if (fallos === 8 && !avisado[k] && vista.base === k) {
+          avisado[k] = true;
+          aviso('Sin conexion con la capa base (' + (k === 'osm' ? 'OpenStreetMap' : 'Esri') +
+                '): se muestran solo los limites de las secciones. El semaforo sigue siendo valido.', true);
+        }
+      });
     });
-    var fallos = 0;
-    vista.teselas.on('tileerror', function () {
-      fallos++;
-      if (fallos === 8) {
-        aviso('Sin conexion al mapa base: se muestran solo los limites de las secciones. ' +
-              'El semaforo sigue siendo valido.');
-      }
-    });
-    vista.teselas.addTo(vista.mapa);
+
     vista.globo = L.tooltip({ sticky: true, direction: 'top', opacity: 1 });
+  }
+
+  /* Cambia la capa base. "ninguna" deja el semaforo sobre el fondo del tablero,
+     que es lo mas legible para leer solo el color. */
+  function ponBase(cual) {
+    if (!vista.mapa || !vista.bases) return;
+    Object.keys(vista.bases).forEach(function (k) {
+      if (vista.mapa.hasLayer(vista.bases[k])) vista.mapa.removeLayer(vista.bases[k]);
+    });
+    if (vista.bases[cual]) {
+      vista.bases[cual].addTo(vista.mapa);
+      vista.bases[cual].bringToBack();
+    }
+    vista.base = cual;
+    $('#Dip-mapa-leaflet').setAttribute('data-dip-base', cual);
+    var b = document.querySelectorAll('#Dip-mapa-seccional .Dip-mapa-opcion');
+    Array.prototype.forEach.call(b, function (n) {
+      n.setAttribute('aria-pressed', n.getAttribute('data-dip-base') === cual ? 'true' : 'false');
+    });
+    try { global.localStorage.setItem(CLAVE_BASE, cual); } catch (e) {}
   }
 
   function colorDe(d) {
@@ -5914,10 +5975,16 @@ window.Dip_MAPA_CATALOGO = "{\"1\":\"ACATIC\",\"2\":\"ACATLAN DE JUAREZ\",\"3\":
 
   /* ═══════════════ 3 · Interfaz ═══════════════ */
 
-  function aviso(html) {
+  /* Un solo hueco para avisos, con prioridad explicita: el origen de los datos
+     manda sobre la capa base. Sin esto, un fallo de teselas que llega tarde
+     borra el aviso de "no se pudo leer el Google Sheet", que es el que el
+     usuario necesita ver para saber por que el mapa no esta en vivo. */
+  function aviso(html, secundario) {
     var a = $('#Dip-mapa-aviso');
-    if (!html) { a.hidden = true; a.innerHTML = ''; return; }
+    if (!html) { a.hidden = true; a.innerHTML = ''; a.removeAttribute('data-dip-clave'); return; }
+    if (secundario && !a.hidden) return;
     a.hidden = false; a.innerHTML = html;
+    a.setAttribute('data-dip-clave', secundario ? 'base' : 'datos');
   }
 
   function capa(estado, texto) {
@@ -5983,13 +6050,6 @@ window.Dip_MAPA_CATALOGO = "{\"1\":\"ACATIC\",\"2\":\"ACATLAN DE JUAREZ\",\"3\":
     if (b && b.isValid()) vista.mapa.flyToBounds(b, { padding: [40, 40], duration: 0.8 });
   }
 
-  /* El sangrado total usa 100vw, que incluye la barra de desplazamiento.
-     Sin descontarla aparece un desbordamiento lateral. */
-  function mideBarra() {
-    var w = global.innerWidth - document.documentElement.clientWidth;
-    document.documentElement.style.setProperty('--Dip-scroll', (w > 0 ? w : 0) + 'px');
-  }
-
   function conecta() {
     var des = $('#Dip-mapa-opacidad'), val = $('#Dip-mapa-opacidad-valor');
     try {
@@ -6031,8 +6091,10 @@ window.Dip_MAPA_CATALOGO = "{\"1\":\"ACATIC\",\"2\":\"ACATLAN DE JUAREZ\",\"3\":
       });
     });
 
-    global.addEventListener('resize', mideBarra);
-    mideBarra();
+    var botones = document.querySelectorAll('#Dip-mapa-seccional .Dip-mapa-opcion');
+    Array.prototype.forEach.call(botones, function (n) {
+      n.addEventListener('click', function () { ponBase(n.getAttribute('data-dip-base')); });
+    });
   }
 
   /* ═══════════════ 4 · Carga ═══════════════ */
@@ -6082,6 +6144,10 @@ window.Dip_MAPA_CATALOGO = "{\"1\":\"ACATIC\",\"2\":\"ACATLAN DE JUAREZ\",\"3\":
     try { vista.catalogo = JSON.parse(global.Dip_MAPA_CATALOGO || '{}'); } catch (e) { vista.catalogo = {}; }
     conecta();
     iniciaMapa();
+
+    var guardada = null;
+    try { guardada = global.localStorage.getItem(CLAVE_BASE); } catch (e) {}
+    ponBase(guardada && (guardada in vista.bases || guardada === 'ninguna') ? guardada : 'osm');
 
     capa('cargando', 'Descomprimiendo la cartografia de las 4,080 secciones&hellip;');
     descomprime(global.Dip_MAPA_CARTOGRAFIA_GZ)
